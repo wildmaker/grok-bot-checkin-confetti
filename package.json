@@ -4,7 +4,7 @@
   "private": true,
   "description": "Unofficial Chrome MV3 extension that decorates the Luma check-in scan page with drifting Grok Bot icons and a confetti celebration per verified check-in signal.",
   "scripts": {
-    "test:unit": "node --test tests/unit/*.test.js",
+    "test:unit": "node --test --test-concurrency=1 tests/unit/*.test.js",
     "build": "node scripts/build.mjs",
     "test:e2e": "playwright test",
     "test": "npm run build && npm run test:unit && npm run test:e2e",
