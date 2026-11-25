@@ -1,4 +1,5 @@
 /* The shipped extension (dist/extension) in real Chromium against local fixtures. Never contacts Luma. */
+const path = require('node:path');
 const { test, expect } = require('@playwright/test');
 const { startServer, launch, watchErrors, hostCount, stat, fx, sleep, HOST } = require('./helpers.cjs');
 
@@ -291,6 +292,59 @@ test('a toast already on screen at load, or before entering the scan route, is n
   await context.close();
 });
 
+test('SUPPORTED: React remount of the same visible toast does not duplicate', async () => {
+  const { context, page } = await openScan();
+  const id = await toast(page);
+  await expect.poll(() => celebrations(page)).toBe(1);
+  for (let i = 0; i < 3; i++) { await call(page, 'remount', id); await sleep(120); }
+  await idle(page);
+  await sleep(300);
+  expect(await celebrations(page)).toBe(1);
+  await context.close();
+});
+
+test('SUPPORTED: same node cleared, then success again counts again', async () => {
+  const { context, page } = await openScan();
+  const id = await toast(page);
+  await expect.poll(() => celebrations(page)).toBe(1);
+  await idle(page);
+  await call(page, 'clear', id);
+  await sleep(200);
+  await call(page, 'fill', id);
+  await expect.poll(() => celebrations(page), { timeout: 10_000 }).toBe(2);
+  await idle(page);
+  await sleep(300);
+  expect(await celebrations(page)).toBe(2);
+  await context.close();
+});
+
+test('SUPPORTED: persistent aria-live clone never counts; each transient toast recurrence counts', async () => {
+  const { context, page } = await openScan();
+  await call(page, 'live');
+  for (let i = 1; i <= 3; i++) {
+    const id = await toast(page);
+    await expect.poll(() => celebrations(page), { timeout: 15_000 }).toBe(i);
+    await sleep(100);
+    await call(page, 'dismiss', id);
+    await call(page, 'live');
+    await idle(page);
+    await sleep(200);
+  }
+  expect(await celebrations(page)).toBe(3);
+  await context.close();
+});
+
+test('AMBIGUOUS (counted once): a different guest whose identical toast replaces the visible one in one step', async () => {
+  const { context, page } = await openScan();
+  const id = await toast(page);
+  await expect.poll(() => celebrations(page)).toBe(1);
+  await page.evaluate((i) => { window.__fx.dismiss(i); window.__fx.toast(); }, id);
+  await idle(page);
+  await sleep(300);
+  expect(await celebrations(page)).toBe(1);
+  await context.close();
+});
+
 test('different guests each count: overlapping toasts, sequential toasts, with a persistent clone throughout', async () => {
   test.setTimeout(60_000);
   const { context, page } = await openScan();
@@ -398,4 +452,26 @@ test('evidence: fixture screenshots mid-celebration (desktop and mobile)', async
     await page.screenshot({ path: `docs/evidence/fixture-${name}-celebration.png` });
     await context.close();
   }
+});
+
+test('evidence: synthetic preview video (fixture is bannered as synthetic)', async () => {
+  test.setTimeout(60_000);
+  const dir = path.join(__dirname, '../../test-results/preview');
+  const env = await launch(server.port, { recordVideoDir: dir });
+  const page = await env.context.newPage();
+  await page.goto(env.scanUrl());
+  await expect.poll(() => hostCount(page)).toBe(1);
+  await sleep(1500);
+  const a = await toast(page);
+  await expect.poll(() => celebrations(page)).toBe(1);
+  await sleep(1200);
+  await toast(page);
+  await expect.poll(() => celebrations(page)).toBe(2);
+  await call(page, 'live');
+  await call(page, 'dismiss', a);
+  await idle(page);
+  await sleep(800);
+  await page.close();
+  await page.video().saveAs(path.join(dir, 'synthetic-preview.webm'));
+  await env.context.close();
 });

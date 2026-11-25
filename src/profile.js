@@ -2,21 +2,18 @@
  * Detection profile for Luma's native check-in success toast (Simplified Chinese UI).
  *
  * Evidence (read-only, user-authorized single check-in on the attendee-detail view of the
- * /guests route): when the native "check in" button succeeded, Luma briefly rendered
- * <element role="status"> with the exact text "已签到。" and also left an
- * aria-live="polite" element with the same text. Nothing else is consumed.
+ * /guests route): after the native "check in" button succeeded, Luma briefly rendered an
+ * element with role="status" and the exact text "已签到。" and also left an aria-live="polite"
+ * element with the same text. Nothing else is consumed.
  *
  * NOT verified: that the same toast appears for a QR scan on /scan (no camera was available),
- * and what failure/duplicate/invalid UI looks like. Those states are simply never matched.
+ * what failure/duplicate/invalid UI looks like, and any other locale. Those are never matched.
  *
- * Rules:
- *  - Only an element with role="status" whose trimmed text is exactly SUCCESS_TEXT counts.
- *  - The aria-live clone, counters, row/button labels and any other text are ignored, so the
- *    clone cannot double-count a toast.
- *  - Each distinct role="status" node is one check-in. Re-renders that keep the node (or rewrite
- *    its text) do not repeat; a new toast node for a different guest counts, even while an older
- *    toast is still visible. The signature is only an in-memory node counter, never page data.
- *  - Toasts already on screen when the scan route is entered are the baseline (see detector.prime).
+ * Rule: success = at least one element with role="status" whose trimmed text is exactly
+ * SUCCESS_TEXT; count = how many are visible right now. The toast text carries no guest
+ * identity, so identity is deliberately not invented: the detector's lifecycle (see
+ * detector.js and docs/DETECTION.md) decides how many check-ins that represents. The
+ * aria-live clone, counters, labels and buttons are ignored. This profile is stateless.
  */
 (function (root, factory) {
   const api = factory();
@@ -24,20 +21,16 @@
   else root.GrokBotCheckin = Object.assign(root.GrokBotCheckin || {}, api);
 })(typeof globalThis !== 'undefined' ? globalThis : this, function () {
   const SUCCESS_TEXT = '已签到。';
-  const nodeIds = new WeakMap();
-  let lastId = 0;
 
   const profile = {
     id: 'luma-native-success-toast-zh-v1',
     verified: true,
     read(root) {
-      let newest = 0;
+      let count = 0;
       for (const el of root.querySelectorAll('[role="status"]')) {
-        if ((el.textContent || '').trim() !== SUCCESS_TEXT) continue;
-        if (!nodeIds.has(el)) nodeIds.set(el, ++lastId);
-        newest = Math.max(newest, nodeIds.get(el));
+        if ((el.textContent || '').trim() === SUCCESS_TEXT) count += 1;
       }
-      return newest ? { state: 'success', signature: `toast-${newest}` } : { state: 'idle' };
+      return count ? { state: 'success', count } : { state: 'idle' };
     },
   };
 

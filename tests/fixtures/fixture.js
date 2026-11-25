@@ -60,6 +60,14 @@
       const el = toasts.querySelector(`[data-toast="${id}"]`);
       el.textContent = el.textContent;
     },
+    remount(id) {
+      const el = toasts.querySelector(`[data-toast="${id}"]`);
+      const fresh = el.cloneNode(true);
+      el.replaceWith(fresh);
+    },
+    clear(id) {
+      toasts.querySelector(`[data-toast="${id}"]`).textContent = '';
+    },
     dismiss(id) {
       const el = toasts.querySelector(`[data-toast="${id}"]`);
       if (el) el.remove();

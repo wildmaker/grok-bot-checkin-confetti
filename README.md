@@ -8,16 +8,17 @@ It only decorates the page. It does not scan, approve, check in, call any API, r
 tokens, hook `fetch`/the camera, or intercept clicks. All overlay elements use `pointer-events: none`
 (except two small pause/hide buttons in the bottom-left corner).
 
-> **Status (v0.2.0):** confetti is driven only by Luma's native Chinese success toast (`role="status"`,
+> **Status (v0.3.0):** confetti is driven only by Luma's native Chinese success toast (`role="status"`,
 > exact text `已签到。`), which was observed on the attendee-detail check-in. That the same toast appears after a
 > QR scan on `/scan` is **not verified**, and scan failure/duplicate UI is unobserved. See
-> [docs/DETECTION.md](docs/DETECTION.md). Automated tests use local fixtures and are not live Luma acceptance.
+> [docs/DETECTION.md](docs/DETECTION.md), which also classifies which "one celebration per guest" cases are supported and which are
+> ambiguous (counted once, never claimed exactly-once). Automated tests use local fixtures and are not live Luma acceptance.
 
 Not affiliated with or endorsed by xAI or Luma. See [ASSETS.md](ASSETS.md) for the icon source and trademark notice.
 
 ## Install (load unpacked)
 
-1. `npm install && npm run build` writes `release/grok-bot-checkin-confetti-v0.2.0-load-unpacked.zip` (needs the `zip` CLI), or use a prebuilt ZIP.
+1. `npm install && npm run build` writes `release/grok-bot-checkin-confetti-v0.3.0-load-unpacked.zip` (needs the `zip` CLI), or use a prebuilt ZIP.
 2. Unzip it to a folder (the ZIP root contains `manifest.json`).
 3. Open `chrome://extensions`, enable Developer mode, choose **Load unpacked**, select the folder.
 4. Open the Luma check-in scan page. Bots appear at the screen edges; use **Pause bots** / **Hide bots** (bottom-left) to stop or hide them. Settings persist via `chrome.storage.local`.

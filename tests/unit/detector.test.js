@@ -4,11 +4,11 @@ const { createDetector, hashSignature } = require('../../src/detector.js');
 
 // Tiny fake page: a list of states/signatures the test profile reads back.
 function harness(profileOverrides) {
-  const page = { state: 'idle', signature: undefined };
-  const profile = { id: 't', verified: true, read: () => ({ state: page.state, signature: page.signature }), ...profileOverrides };
+  const page = { state: 'idle', signature: undefined, count: undefined };
+  const profile = { id: 't', verified: true, read: () => ({ state: page.state, signature: page.signature, count: page.count }), ...profileOverrides };
   const events = [];
   const d = createDetector(profile, (e) => events.push(e));
-  const show = (state, signature) => { page.state = state; page.signature = signature; return d.evaluate({}); };
+  const show = (state, signature, count) => { page.state = state; page.signature = signature; page.count = count; return d.evaluate({}); };
   return { d, events, show, page };
 }
 
@@ -75,4 +75,39 @@ test('events never expose the signature', () => {
   h.show('success', 'private-looking-token');
   assert.equal(JSON.stringify(h.events).includes('private'), false);
   assert.notEqual(hashSignature('a'), hashSignature('b'));
+});
+
+test('count: extra simultaneous successes fire once each; decreases and holds do not', () => {
+  const h = harness();
+  h.show('success', undefined, 1);
+  h.show('success', undefined, 2);
+  h.show('success', undefined, 2);
+  h.show('success', undefined, 1);
+  assert.equal(h.events.length, 2);
+  h.show('success', undefined, 2);
+  assert.equal(h.events.length, 3);
+});
+
+test('count: several appearing from idle in one step fire once each, bounded per step', () => {
+  const h = harness();
+  h.show('success', undefined, 3);
+  assert.equal(h.events.length, 3);
+  h.show('idle');
+  h.show('success', undefined, 50);
+  assert.equal(h.events.length, 3 + 5);
+});
+
+test('count: replacing a result by an identical one within one step is counted once (documented ambiguity)', () => {
+  const h = harness();
+  h.show('success', undefined, 1);
+  h.show('success', undefined, 1);
+  assert.equal(h.events.length, 1);
+});
+
+test('count: reset states clear the count baseline', () => {
+  const h = harness();
+  h.show('success', undefined, 2);
+  h.show('failure');
+  h.show('success', undefined, 1);
+  assert.equal(h.events.length, 3);
 });

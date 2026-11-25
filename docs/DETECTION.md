@@ -15,23 +15,53 @@ makes this assumption explicitly: *if* the scan flow shows the same native toast
 flow uses a different mechanism, it simply stays silent (a missed celebration, never a false one). The
 toast text is the only detection rule. It is not live QR-scan acceptance.
 
-## Rule (`src/profile.js`, `luma-native-success-toast-zh-v1`)
+## Rule (`src/profile.js` + `src/detector.js`)
 
-- Trigger: an element matching `[role="status"]` whose trimmed `textContent` is exactly `已签到。`.
-- Ignored: the `aria-live` clone, counters (`已签到 N`), row/dialog labels (`已签到 现在`), the `撤销签到`
-  button, button clicks, any other text or role. No whole-page text search.
-- One distinct toast node = one check-in. The signature is an in-memory node counter (no page data).
-  - Same node staying on screen, rewritten, or re-rendered with row/counter updates: no repeat.
-  - A new toast node while an older one is still visible (a different guest right after): counts again.
-  - Removing the older toast while a newer one remains: no repeat.
-  - The lingering `aria-live` clone never counts, so "transient toast then persistent clone" is one event.
-- Baseline: toasts already present when the scan route is entered (initial load or SPA entry) never celebrate
-  (`detector.prime`). Only toasts that appear afterwards do.
-- Detector is otherwise fail-closed: unrecognised state, thrown errors, or an unverified profile never fire.
+The profile is stateless: success = at least one `[role="status"]` element whose trimmed text is exactly
+`已签到。`; `count` = how many are visible right now. Ignored: the `aria-live` clone, counters (`已签到 N`),
+row/dialog labels, the `撤销签到` button, clicks, any other text or role, any whole-page text search.
 
-## Known limits
+The toast text carries **no guest identity**, and none is invented. How many check-ins it represents is decided by
+the detector lifecycle, whose state is three scalars (active, last count, last signature hash; no DOM node
+references, nothing persisted or logged). An event fires when:
 
-- If Luma re-keys a still-visible toast (remounts the node) the new node counts as a new check-in.
-- If a second check-in reuses the very same toast node without removing/replacing it, it is not seen.
-- Pending/failure/duplicate states are not modelled until their real UI is observed; add them to the profile
-  with fixtures only after sanitized structural evidence exists (roles, ARIA, nesting, timing; no guest data).
+1. success appears after a non-success state (nothing visible at the previous evaluation), or
+2. more success toasts are visible at once than at the previous evaluation (one event per extra), or
+3. a profile-provided in-memory signature changes while success stays visible (unused today; reserved for a
+   real per-guest field if its structure is ever observed).
+
+Toasts present when the scan route is entered are the baseline and never celebrate.
+
+## Exactly-once classification
+
+"Exactly one celebration per actual guest" cannot be proven from this UI alone, because every guest's toast is
+the same text. What can and cannot be distinguished from the visible DOM:
+
+| Case | Result | Class |
+| --- | --- | --- |
+| One toast appears | 1 | Supported |
+| Same toast re-rendered, text rewritten, row/counter/button updates | 1 | Supported |
+| React remount: visible toast replaced by an identical node in the same step | 1 (no duplicate) | Supported |
+| Same node cleared (no toast visible), then success again | +1 | Supported |
+| Toast gone, a later toast appears | +1 each | Supported |
+| Second toast visible alongside the first | +1; removing the older adds nothing | Supported (coexisting toasts are distinguishable) |
+| Persistent `aria-live` clone + transient toast, once or recurring | clone never counts; +1 per toast appearance | Supported |
+| Toast present before route entry (initial load or SPA entry) | 0 | Supported |
+| Guest B's identical toast replaces guest A's visible toast within one evaluation tick | 1 | **Ambiguous**: indistinguishable from a remount; counted once (may undercount) |
+| A second check-in that reuses the same visible node and text without it ever disappearing | not seen | **Ambiguous**: undercount |
+| A toast library that keeps the old node in the DOM (exit animation) while the new one appears, for one guest | 2 | **Ambiguous**: may overcount; parent should confirm how Luma removes toasts |
+| QR scan on `/scan` shows the same toast | unknown | **Unverified** |
+| Failure/duplicate/invalid UI; English or other locales | never matched | **Unverified** |
+
+Policy: when the visible UI cannot tell two situations apart, the detector counts once (no duplicate). It never
+claims exactly-once. If the real toast DOM exposes a per-guest field in the current result view, an ephemeral
+in-memory signature can be added to the profile and the lifecycle above already handles it.
+
+Evaluations run on a 50 ms throttle after DOM mutations; "nothing visible" means nothing visible at an evaluation
+tick, so a toast that vanishes and returns inside one tick is treated as one.
+
+## What evidence would close the remaining gaps
+
+Sanitized structure only (roles, ARIA attributes, nesting, class-name shape, insertion/removal timing): the toast
+after a real QR scan on `/scan` (Standard and Express), how Luma removes/replaces toasts, any per-guest field in
+the visible result, and the failure/duplicate/invalid UI. No names, emails, QR payloads or event-specific HTML.

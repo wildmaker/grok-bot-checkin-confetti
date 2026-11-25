@@ -8,7 +8,7 @@ const { execFileSync } = require('node:child_process');
 const CSP = "default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self' data:";
 const SHELL = '<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><title>Synthetic fixture</title>' +
   '<meta name="viewport" content="width=device-width,initial-scale=1"><link rel="stylesheet" href="/fixture.css"></head>' +
-  '<body><div id="app"></div><div id="toasts"></div><div id="live"></div><script src="/fixture.js"></script></body></html>';
+  '<body><div class="synthetic-banner">SYNTHETIC FIXTURE - not Luma, no guest data</div><div id="app"></div><div id="toasts"></div><div id="live"></div><script src="/fixture.js"></script></body></html>';
 
 function makeCert() {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'fixture-cert-'));

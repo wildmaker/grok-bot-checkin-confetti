@@ -20,7 +20,13 @@ toast; empty-then-filled toast; rewrite/re-render with row/counter/button update
 `aria-live` clone (gap and overlap) = one; clone alone, near-miss texts, wrong roles, English text = none; toast
 present at load or before SPA entry = none; overlapping guests, sequential guests and a persistent clone all
 counted correctly; no observer leaks across route re-entry; pending cap, <=48 particles, DOM drains.
-A mutation check (matching the `aria-live` clone too) makes the double-celebration test fail (1 expected, 3 seen).
+The detector lifecycle cases are tagged SUPPORTED or AMBIGUOUS in the tests and mirror the table in `docs/DETECTION.md`
+(including React remount, cleared-then-refilled node, coexisting toasts, clone persistence with toast recurrence, and
+the ambiguous same-tick swap that is counted once). A mutation check (matching the `aria-live` clone too) makes the
+double-celebration test fail.
+
+The fixture page is bannered `SYNTHETIC FIXTURE - not Luma, no guest data`; the screenshots and the preview video
+are of that fixture.
 
 ## Not covered
 
