@@ -8,8 +8,6 @@
 - Path geometry is copied unmodified. Only presentation was changed: the head is filled `#885cf5` (the
   default agent colour used by that page's CSS) and eyes `#ffffff`. The overlay re-colours the head per bot.
 - SHA-256 of the file: see `sha256sum assets/grok-bot-mark.svg` (recorded in the release notes).
-- `assets/alternates/grok-bot-mark-tilted.svg` is the page's other variant (`svg.grok-bot-mark`), included
-  only so a reviewer can compare; it is not shipped.
 - Extension icons in `assets/icons/` are renders of the same SVG (`scripts/make-icons.mjs`).
 - It is not the Grok app logo or the X logo. Those are different marks and are not used.
 

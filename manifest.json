@@ -1,12 +1,16 @@
 {
   "manifest_version": 3,
   "name": "Grok Bot Check-in Confetti (unofficial)",
-  "version": "0.1.0",
-  "description": "Unofficial. Adds floating Grok Bot icons to the Luma check-in scan page and plays confetti when a verified check-in success signal appears. Does not touch the scanner, camera, or any network request.",
-  "permissions": ["storage"],
+  "version": "0.2.0",
+  "description": "Unofficial. Adds floating Grok Bot icons to the Luma check-in scan page and plays confetti when Luma's native Chinese check-in success toast appears. Does not touch the scanner, camera, or any network request.",
+  "permissions": [
+    "storage"
+  ],
   "content_scripts": [
     {
-      "matches": ["https://luma.com/*"],
+      "matches": [
+        "https://luma.com/*"
+      ],
       "js": [
         "route.js",
         "detector.js",

@@ -1,26 +1,31 @@
-/* SYNTHETIC fixture app. Mimics client-side routing only; contains no Luma markup. */
+/*
+ * Fixture app: a tiny client-side router plus generic localized UI strings that mirror the
+ * *kinds* of nodes seen in the native UI (role=status toast, aria-live clone, counters, row
+ * status, revoke button). It contains no guest data and no captured Luma markup.
+ */
 (function () {
   const app = document.getElementById('app');
   const SCAN = /^\/check-in\/[^/]+\/scan\/?$/;
+  const toasts = document.getElementById('toasts');
+  const live = document.getElementById('live');
   let clicks = 0;
+  let toastSeq = 0;
 
   function scanView() {
     app.innerHTML =
       '<div class="cam" id="fake-camera"></div>' +
-      '<div class="panel"><div id="counter-line"><span id="counter">0</span> synthetic-counter</div>' +
-      '<button id="fake-btn" type="button">Synthetic button</button>' +
-      '<div id="result-region" role="alert"></div><div id="click-count">0</div></div>';
+      '<div class="panel"><div id="counter-line">已签到 <span id="counter">0</span></div>' +
+      '<button id="fake-btn" type="button">签到</button>' +
+      '<div id="row-status">参加</div><div id="click-count">0</div></div>';
     document.getElementById('fake-camera').addEventListener('click', () => bump());
     document.getElementById('fake-btn').addEventListener('click', () => bump());
     const preset = new URLSearchParams(location.search).get('preset');
-    if (preset) window.__fx.setResult(preset, 'preset-guest');
+    if (preset === 'status') window.__fx.toast();
+    if (preset === 'live') window.__fx.live();
   }
 
   function eventView() {
-    app.innerHTML =
-      '<div id="event-page"><h1>Synthetic event page</h1>' +
-      '<div data-synthetic-result data-state="success" data-synthetic-token="off-route"></div>' +
-      '<button id="to-scan" type="button">Go to scan</button></div>';
+    app.innerHTML = '<div id="event-page"><h1>Event page</h1><button id="to-scan" type="button">Go to scan</button></div>';
     document.getElementById('to-scan').addEventListener('click', () => window.__fx.goto('/check-in/evt-SYNTHETIC/scan'));
   }
 
@@ -35,32 +40,44 @@
     else eventView();
   }
 
-  function region() {
-    return document.getElementById('result-region');
-  }
-
-  function markup(state, token) {
-    return `<div data-synthetic-result data-state="${state}" data-synthetic-token="${token}">${state}</div>`;
-  }
-
   window.__fx = {
     goto(path) {
       history.pushState({}, '', path);
       render();
     },
-    setResult(state, token) {
-      region().innerHTML = markup(state, token);
+    toast(text = '已签到。', role = 'status') {
+      const el = document.createElement('div');
+      el.setAttribute('role', role);
+      el.dataset.toast = String(++toastSeq);
+      if (text !== null) el.textContent = text;
+      toasts.appendChild(el);
+      return toastSeq;
     },
-    rerender() {
-      const node = region().firstElementChild;
-      if (!node) return;
-      region().innerHTML = markup(node.getAttribute('data-state'), node.getAttribute('data-synthetic-token'));
+    fill(id, text = '已签到。') {
+      toasts.querySelector(`[data-toast="${id}"]`).textContent = text;
     },
-    clear() {
-      region().innerHTML = '';
+    rewrite(id) {
+      const el = toasts.querySelector(`[data-toast="${id}"]`);
+      el.textContent = el.textContent;
     },
-    setCounter(n) {
-      document.getElementById('counter').textContent = String(n);
+    dismiss(id) {
+      const el = toasts.querySelector(`[data-toast="${id}"]`);
+      if (el) el.remove();
+    },
+    live(text = '已签到。') {
+      live.innerHTML = '';
+      const el = document.createElement('div');
+      el.setAttribute('aria-live', 'polite');
+      el.textContent = text;
+      live.appendChild(el);
+    },
+    clearLive() {
+      live.innerHTML = '';
+    },
+    markRowCheckedIn() {
+      document.getElementById('row-status').textContent = '已签到 现在';
+      document.getElementById('fake-btn').textContent = '撤销签到';
+      document.getElementById('counter').textContent = String(Number(document.getElementById('counter').textContent) + 1);
     },
     clicks: () => clicks,
   };

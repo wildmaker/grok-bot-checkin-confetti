@@ -114,6 +114,7 @@
       host.setAttribute('data-skipped', String(skipped));
       host.setAttribute('data-dropped', String(queue.stats().dropped));
       host.setAttribute('data-particles', String(particleCount));
+      host.setAttribute('data-queued', String(queue.stats().pending + (queue.stats().running ? 1 : 0)));
       pauseBtn.textContent = settings.paused ? labels.resume : labels.pause;
       pauseBtn.setAttribute('aria-label', pauseBtn.textContent);
       pauseBtn.hidden = settings.hidden;
@@ -225,8 +226,8 @@
         for (const anim of animations) anim.cancel();
         particleCount = Math.max(0, particleCount - layer.childElementCount);
         layer.remove();
-        publish();
         done();
+        publish();
       };
       activeCleanup = finish;
       Promise.allSettled(animations.map((a) => a.finished)).then(finish);

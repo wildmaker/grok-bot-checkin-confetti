@@ -2,30 +2,29 @@
 
 ## Layers
 
-1. **Unit** (`tests/unit`, `node:test`, jsdom): route gate, route watcher (Navigation API and fallback),
-   detector lifecycle/dedup/fail-closed behaviour, celebration queue cap, manifest/permission assertions,
-   production build contains no synthetic profile, ZIP is byte-reproducible and loadable.
-2. **Browser extension** (`tests/e2e`, Playwright + real Chromium, MV3 unpacked):
-   - `prod.spec.cjs` loads `dist/prod` (shippable, fail-closed).
-   - `synthetic.spec.cjs` loads `dist/test`, identical except `profile.js` is the synthetic profile.
-   A local HTTPS server maps `luma.com` to 127.0.0.1 so the manifest match pattern is exercised for real. It
-   serves a strict CSP (`style-src 'self'`) to prove the constructable stylesheet is not blocked. The fixture
-   app is a tiny client-side router, so SPA entry from `/event/...` is real `history.pushState` navigation.
+1. **Unit** (`tests/unit`, `node:test`, no DOM library): route gate and watcher (Navigation API and fallback), detector
+   lifecycle, the native-toast profile against fake nodes (exact text/role matching, near misses, baseline, overlapping
+   guests, clone ignored, empty-then-filled), celebration queue cap, manifest/permissions, no network/cookie/
+   click-interception code, and a byte-reproducible ZIP that contains no test material.
+2. **Browser extension** (`tests/e2e/extension.spec.cjs`, Playwright + real Chromium, MV3 unpacked `dist/extension`):
+   a local HTTPS server maps `luma.com` to 127.0.0.1 so the real manifest match pattern is exercised, with a strict
+   CSP (`style-src 'self'`). The fixture app is a tiny client-side router (real `history.pushState` navigation) with
+   generic localized strings: a `role="status"` `已签到。` toast, a lingering `aria-live` clone, counter, row status,
+   and `撤销签到` button. It contains no guest data and no captured Luma markup.
 
 ## Covered
 
-Load/no console errors, scan-route-only mounting, SPA enter/exit/back/forward/re-entry (one host), pointer
-pass-through (`elementFromPoint`, real clicks under bots), page CSS cannot restyle the overlay, pause/hide
-persistence, reduced motion, narrow-viewport bot count and no overlap with the central panel, fail-closed
-production detector, single celebration per success, no repeat on re-render, failure/duplicate/pending/
-no-match/ambiguous never celebrate, different guests back to back both celebrate, later guests celebrate,
-pre-existing success not celebrated, off-route markers ignored, queue cap and particle/DOM bounds.
+Load/no console errors; scan-route-only mounting; SPA enter/exit/back/forward/re-entry; pointer pass-through; page
+CSS cannot restyle the overlay; pause/hide persistence; reduced motion; narrow viewport; one celebration per
+toast; empty-then-filled toast; rewrite/re-render with row/counter/button updates; transient toast then
+`aria-live` clone (gap and overlap) = one; clone alone, near-miss texts, wrong roles, English text = none; toast
+present at load or before SPA entry = none; overlapping guests, sequential guests and a persistent clone all
+counted correctly; no observer leaks across route re-entry; pending cap, <=48 particles, DOM drains.
+A mutation check (matching the `aria-live` clone too) makes the double-celebration test fail (1 expected, 3 seen).
 
-## Not covered (be honest)
+## Not covered
 
-- **Live Luma**: nothing here touches luma.com. The real success/failure/duplicate DOM is unverified, so a
-  green run says nothing about live celebrations. Live acceptance needs a human with event access and only
-  the designated test guest, and sanitized observations (see DETECTION.md).
-- Camera behaviour: the extension never touches it; fixtures use a plain div, not a real camera.
-- Branded Chrome stable cannot side-load via flags (Chrome 137+); the e2e run uses Playwright's Chromium.
-  Manual load-unpacked in normal Chrome is the install path.
+- **Live QR scan on /scan**: no camera was available. The toast was observed on the attendee-detail check-in only.
+- Scan failure/duplicate/invalid UI, Express mode, other locales.
+- Normal branded Chrome cannot side-load via flags (Chrome 137+); e2e uses Playwright's Chromium. Install in
+  normal Chrome via Load unpacked.

@@ -1,43 +1,37 @@
-# Success detection status
+# Success detection
 
-## What is known (from official docs and a read-only authenticated look at the scan page)
+## Verified signal (native toast) vs unverified path (QR scan on /scan)
 
-- Luma's official check-in docs describe Standard Mode (confirm after scan) and Express Mode (auto check-in
-  after scan); invalid tickets show a "not valid" state. There is no public check-in write API, and this
-  extension makes no API calls.
-- The scan page shows camera permission UI, a Standard/Express mode selector, a confirmation button, a
-  ticket-type restriction switch, an empty alert region, and checked-in / attendee counters.
-- No success, error, or duplicate state has been observed, so **no success selector or text is verified**.
-  Counter values and mode labels are explicitly *not* accepted as success evidence.
+| Item | Status |
+| --- | --- |
+| Luma's native "check in" button on an attendee-detail view (`/guests` route), Simplified Chinese UI, renders an element with `role="status"` and the exact text `已签到。` right after a successful check-in | **Observed** (read-only, one user-authorized check-in) |
+| An `aria-live="polite"` element with the same text lingers afterwards | **Observed**; deliberately never used as a trigger |
+| The same toast appears after a QR scan on the `/scan` page (Standard or Express mode) | **Not verified** (no camera available) |
+| Failure / duplicate / "not valid" / pending UI on the scan page | **Not observed**; never matched |
+| Other locales (e.g. English wording) | **Not observed**; no selector or text is guessed |
 
-## Current behaviour (fail-closed)
+The extension runs on `/check-in/<id>/scan`, consumes only the first (verified) toast signal, and therefore
+makes this assumption explicitly: *if* the scan flow shows the same native toast, it celebrates; if the scan
+flow uses a different mechanism, it simply stays silent (a missed celebration, never a false one). The
+toast text is the only detection rule. It is not live QR-scan acceptance.
 
-`src/profile.js` is `verified: false`. The detector never fires for an unverified profile, so the production
-build shows bots only. The MutationObserver is not even installed.
+## Rule (`src/profile.js`, `luma-native-success-toast-zh-v1`)
 
-## Contract a verified profile must satisfy
+- Trigger: an element matching `[role="status"]` whose trimmed `textContent` is exactly `已签到。`.
+- Ignored: the `aria-live` clone, counters (`已签到 N`), row/dialog labels (`已签到 现在`), the `撤销签到`
+  button, button clicks, any other text or role. No whole-page text search.
+- One distinct toast node = one check-in. The signature is an in-memory node counter (no page data).
+  - Same node staying on screen, rewritten, or re-rendered with row/counter updates: no repeat.
+  - A new toast node while an older one is still visible (a different guest right after): counts again.
+  - Removing the older toast while a newer one remains: no repeat.
+  - The lingering `aria-live` clone never counts, so "transient toast then persistent clone" is one event.
+- Baseline: toasts already present when the scan route is entered (initial load or SPA entry) never celebrate
+  (`detector.prime`). Only toasts that appear afterwards do.
+- Detector is otherwise fail-closed: unrecognised state, thrown errors, or an unverified profile never fire.
 
-```
-profile = { id, verified: true, read(root) -> { state, signature? } }
-state: idle | success | failure | duplicate | pending | nomatch | unknown
-```
+## Known limits
 
-- `success` only for the real "this guest was just checked in" UI, never for failure, duplicate, pending,
-  invalid, or no-match, and never for static counters or labels. Mixed/ambiguous DOM must return `unknown`.
-- `signature` (optional) is an in-memory string that differs between guests (e.g. derived from the result
-  card). It is hashed, never stored or logged. It lets two different guests shown back to back both celebrate.
-- Dedup is lifecycle based, with no time window: an event fires when the state enters `success` from
-  `idle/failure/duplicate/pending/nomatch`, or when the signature changes while still `success`. Re-renders
-  of the same result do not repeat; `unknown` never resets the lifecycle. A success already visible at mount
-  is the baseline and is not celebrated.
-- If the real success UI has no per-guest signal, two guests shown back to back with no state between them
-  cannot be told apart; that limitation must be documented with the evidence.
-
-## What parent/evidence must supply before enabling
-
-Sanitized structure only (roles, ARIA attributes, element nesting, class-name shape, insertion/removal
-timing), for Standard and Express modes: success, "not valid", already-checked-in, pending/confirm, and
-no-match. No names, emails, QR payloads, or event-specific HTML.
-
-Then: write the profile, add a synthetic fixture that mirrors that structure, extend the tests, and flip
-`verified` only when the unit and e2e suites cover each state above.
+- If Luma re-keys a still-visible toast (remounts the node) the new node counts as a new check-in.
+- If a second check-in reuses the very same toast node without removing/replacing it, it is not seen.
+- Pending/failure/duplicate states are not modelled until their real UI is observed; add them to the profile
+  with fixtures only after sanitized structural evidence exists (roles, ARIA, nesting, timing; no guest data).

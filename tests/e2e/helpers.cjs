@@ -11,8 +11,8 @@ async function startServer() {
   return start();
 }
 
-async function launch(variant, port, { viewport = { width: 1280, height: 800 }, recordVideoDir } = {}) {
-  const ext = path.join(ROOT, 'dist', variant);
+async function launch(port, { viewport = { width: 1280, height: 800 }, recordVideoDir } = {}) {
+  const ext = path.join(ROOT, 'dist/extension');
   const userDataDir = fs.mkdtempSync(path.join(os.tmpdir(), 'pw-ext-'));
   const context = await chromium.launchPersistentContext(userDataDir, {
     channel: 'chromium',
