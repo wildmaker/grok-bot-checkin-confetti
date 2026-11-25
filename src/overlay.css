@@ -1,0 +1,26 @@
+*,*::before,*::after{box-sizing:border-box}
+.stage{position:fixed;inset:0;pointer-events:none;overflow:hidden;contain:layout paint style}
+.bot{position:absolute;width:40px;height:40px;opacity:.9;pointer-events:none;will-change:transform;transform:translate(0,0) rotate(-4deg)}
+.hop{width:100%;height:100%;pointer-events:none}
+.bot svg{display:block;width:100%;height:100%;overflow:visible;pointer-events:none}
+.head{fill:var(--coat,#885cf5)}
+.eye{fill:#fff}
+.confetti{position:absolute;inset:0;pointer-events:none}
+.p{position:absolute;left:0;top:0;pointer-events:none;will-change:transform,opacity}
+.controls{position:fixed;left:8px;bottom:8px;display:flex;gap:4px;pointer-events:auto;opacity:.5;transition:opacity .15s}
+.controls:hover,.controls:focus-within{opacity:1}
+.controls button{all:unset;box-sizing:border-box;cursor:pointer;height:26px;padding:0 10px;border-radius:13px;background:rgba(20,20,24,.85);color:#fff;font:600 11px/26px system-ui,-apple-system,"Segoe UI",sans-serif;letter-spacing:.01em}
+.controls button:focus-visible{outline:2px solid #fff;outline-offset:2px}
+:host([data-hidden]) .stage .bot,:host([data-hidden]) .stage .confetti{display:none}
+:host([data-paused]) .bot{animation-play-state:paused}
+@media (prefers-reduced-motion:no-preference){
+  .bot{animation:drift var(--dur,14s) ease-in-out var(--delay,0s) infinite alternate}
+}
+@keyframes drift{
+  from{transform:translate(0,0) rotate(-4deg)}
+  to{transform:translate(var(--dx,10px),var(--dy,40px)) rotate(4deg)}
+}
+@media (max-width:700px){
+  .bot{width:30px;height:30px}
+  .bot:nth-child(n+3){display:none}
+}
