@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>SYNTHETIC DEMO - Grok Bot Check-in Confetti (beta)</title>
+  <link rel="stylesheet" href="preview.css">
+</head>
+<body>
+  <header class="demo-banner">SYNTHETIC DEMO &middot; BETA &mdash; not Luma, not a scanner, no real guests or tickets</header>
+
+  <main>
+    <section class="camera" aria-label="Synthetic camera placeholder">
+      <p>Synthetic camera placeholder<br><small>No camera is used. Nothing here scans, checks in, or contacts Luma.</small></p>
+    </section>
+
+    <section class="panel" aria-labelledby="sim-title">
+      <h1 id="sim-title">Simulate native UI events</h1>
+      <p class="lead">These buttons only add or remove fake page elements. The real extension scripts (in <code>extension/</code>)
+        watch the page and decide whether to celebrate, exactly as they would on a Luma page.</p>
+      <div class="actions" id="actions">
+        <button type="button" data-action="success">Simulate check-in success <span class="expect">expect: 1 celebration</span></button>
+        <button type="button" data-action="two-guests">Two guests, overlapping toasts <span class="expect">expect: 2 celebrations</span></button>
+        <button type="button" data-action="remount">Success, then toast re-rendered <span class="expect">expect: 1 celebration</span></button>
+        <button type="button" data-action="repeat">Repeated scan of same guest (synthetic wording) <span class="expect">expect: none</span></button>
+        <button type="button" data-action="failure">Failure / not valid (synthetic wording) <span class="expect">expect: none</span></button>
+        <button type="button" data-action="live" aria-pressed="false">Toggle lingering aria-live clone <span class="expect">expect: never counts</span></button>
+      </div>
+    </section>
+
+    <section class="panel" aria-labelledby="stat-title">
+      <h2 id="stat-title">What the extension reports</h2>
+      <dl class="stats">
+        <div><dt>Celebrations played</dt><dd id="stat-celebrations">0</dd></div>
+        <div><dt>Skipped (paused/hidden)</dt><dd id="stat-skipped">0</dd></div>
+        <div><dt>Queued or playing</dt><dd id="stat-queued">0</dd></div>
+      </dl>
+      <ol class="log" id="log" aria-live="off"></ol>
+    </section>
+
+    <section class="panel notes">
+      <h2>Read this first</h2>
+      <p>This is a visual preview with <strong>synthetic</strong> events. It is <strong>not</strong> acceptance of the real scanner:
+        the extension has not been validated against a live QR scan on Luma's check-in page, and scan failure/duplicate screens have never been observed.
+        The "repeated" and "failure" buttons use made-up wording so you can see that unrecognised statuses are ignored.</p>
+    </section>
+  </main>
+
+  <div id="toasts"></div>
+  <div id="live"></div>
+
+  <script src="extension/route.js"></script>
+  <script src="extension/detector.js"></script>
+  <script src="extension/queue.js"></script>
+  <script src="extension/profile.js"></script>
+  <script src="extension/assets.generated.js"></script>
+  <script src="extension/overlay.js"></script>
+  <script src="preview-shim.js"></script>
+  <script src="extension/content.js"></script>
+  <script type="module" src="preview.js"></script>
+</body>
+</html>

@@ -1,5 +1,5 @@
 // Assembles the unpacked extension in dist/extension and zips it reproducibly into release/.
-import { readFileSync, writeFileSync, mkdirSync, rmSync, cpSync, readdirSync, utimesSync } from 'node:fs';
+import { readFileSync, writeFileSync, mkdirSync, rmSync, cpSync, readdirSync, utimesSync, chmodSync } from 'node:fs';
 import { execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
@@ -35,3 +35,19 @@ const zip = path.join(root, 'release', `grok-bot-checkin-confetti-v${version}-lo
 rmSync(zip, { force: true });
 execFileSync('zip', ['-X', '-D', '-q', '-9', zip, ...files], { cwd: out, env: { ...process.env, TZ: 'UTC' } });
 console.log(`built dist/extension and ${path.relative(root, zip)} (${files.length} files)`);
+
+// Preview bundle: static synthetic demo that runs with `python3 serve.py` (no Node needed to run it).
+const bundleName = 'grok-bot-confetti-preview';
+const bundle = path.join(root, 'dist', bundleName);
+mkdirSync(bundle, { recursive: true });
+for (const f of readdirSync(path.join(root, 'preview'))) cpSync(path.join(root, 'preview', f), path.join(bundle, f));
+cpSync(out, path.join(bundle, 'extension'), { recursive: true });
+cpSync(path.join(root, 'ASSETS.md'), path.join(bundle, 'ASSETS.md'));
+cpSync(path.join(root, 'assets/grok-bot-mark.svg'), path.join(bundle, 'assets/grok-bot-mark.svg'));
+for (const f of ['start.sh', 'serve.py']) chmodSync(path.join(bundle, f), 0o755);
+const bundleFiles = execFileSync('find', [bundleName, '-type', 'f'], { cwd: path.join(root, 'dist'), encoding: 'utf8' }).trim().split('\n').sort();
+for (const f of bundleFiles) utimesSync(path.join(root, 'dist', f), fixed, fixed);
+const previewZip = path.join(root, 'release', `grok-bot-checkin-confetti-preview-v${version}.zip`);
+rmSync(previewZip, { force: true });
+execFileSync('zip', ['-X', '-D', '-q', '-9', previewZip, ...bundleFiles], { cwd: path.join(root, 'dist'), env: { ...process.env, TZ: 'UTC' } });
+console.log(`built ${path.relative(root, previewZip)} (${bundleFiles.length} files)`);

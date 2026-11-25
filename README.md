@@ -1,4 +1,7 @@
-# Grok Bot Check-in Confetti (unofficial)
+# Grok Bot Check-in Confetti (unofficial, BETA)
+
+> **Experimental beta. Not production-ready, no release tag.** The live QR-scan path on Luma's check-in page has not been validated.
+> Try the [synthetic local preview](#try-the-synthetic-preview-no-luma-needed) first.
 
 A Chrome Manifest V3 extension that decorates the official Luma web check-in scanner page
 (`https://luma.com/check-in/<event>/scan`) with small floating Grok Bot icons and, once a
@@ -15,6 +18,13 @@ tokens, hook `fetch`/the camera, or intercept clicks. All overlay elements use `
 > ambiguous (counted once, never claimed exactly-once). Automated tests use local fixtures and are not live Luma acceptance.
 
 Not affiliated with or endorsed by xAI or Luma. See [ASSETS.md](ASSETS.md) for the icon source and trademark notice.
+
+## Try the synthetic preview (no Luma needed)
+
+Needs only `python3`. `npm run build` writes `release/grok-bot-checkin-confetti-preview-v0.3.1.zip`; unzip it and run
+`./start.sh`, then open <http://127.0.0.1:8765/>. It runs the real extension scripts against a clearly bannered
+**SYNTHETIC DEMO** page with buttons for simulated success, overlapping guests, re-render, repeated and failure. A passing
+demo is **not** real-scanner acceptance. Details: [preview/README.md](preview/README.md).
 
 ## Install (load unpacked)
 
@@ -40,6 +50,15 @@ on any other path and runs no code besides route checks there.
 
 Motion respects `prefers-reduced-motion` (drift off; a success is acknowledged with a brief opacity pulse, no particles).
 Bots are paused while the tab is hidden for celebrations and when the user pauses or hides them.
+
+## Known limitations (beta)
+
+- Success is detected only from the native `role="status"` toast with exact text `已签到。`, observed on the attendee-detail
+  check-in. That the same toast appears after a QR scan on `/scan` is **unverified**; if not, nothing celebrates.
+- Chinese UI only. Scan failure/duplicate/invalid screens were never observed and are never matched.
+- "Exactly one celebration per guest" is not claimed: the toast has no guest identity. Some cases may undercount or overcount;
+  see the supported/ambiguous table in [docs/DETECTION.md](docs/DETECTION.md).
+- Tests use local fixtures and a synthetic demo, never luma.com.
 
 ## Tests
 

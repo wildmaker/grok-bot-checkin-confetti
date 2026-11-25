@@ -1,6 +1,6 @@
 {
   "name": "grok-bot-checkin-confetti",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "private": true,
   "description": "Unofficial Chrome MV3 extension that decorates the Luma check-in scan page with drifting Grok Bot icons and a confetti celebration per verified check-in signal.",
   "scripts": {
