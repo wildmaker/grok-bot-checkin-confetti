@@ -5,7 +5,7 @@
 
 A Chrome Manifest V3 extension that decorates the official Luma web check-in scanner page
 (`https://luma.com/check-in/<event>/scan`) with small floating Grok Bot icons and, once a
-native check-in success toast appears, plays a one-bot confetti burst per check-in.
+native check-in success toast appears, plays a full-screen confetti celebration per check-in.
 
 It only decorates the page. It does not scan, approve, check in, call any API, read cookies or
 tokens, hook `fetch`/the camera, or intercept clicks. All overlay elements use `pointer-events: none`
@@ -44,7 +44,7 @@ on any other path and runs no code besides route checks there.
 | `src/route.js` | Exact path gate `^/check-in/[^/]+/scan/?$` on `https://luma.com`; Navigation API route watcher (popstate/poll fallback) |
 | `src/detector.js` | Fail-closed success detector contract, lifecycle-based dedup, in-memory hashed signature |
 | `src/queue.js` | One celebration at a time, hard pending cap |
-| `src/overlay.js`, `overlay.css` | Open Shadow DOM, constructable stylesheet, drifting bots, WAAPI confetti (max 48 particles) |
+| `src/overlay.js`, `overlay.css` | Open Shadow DOM, constructable stylesheet, drifting bots, WAAPI confetti: two corner cannons, a bot burst, top rain, shock rings and a check-in badge (max 160 particles) |
 | `src/content.js` | Mount/unmount per route, settings, throttled MutationObserver (only when a verified profile exists) |
 | `src/profile.js` | Detection profile: exact native `role=status` `已签到。` toast only |
 

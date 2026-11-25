@@ -15,6 +15,17 @@ makes this assumption explicitly: *if* the scan flow shows the same native toast
 flow uses a different mechanism, it simply stays silent (a missed celebration, never a false one). The
 toast text is the only detection rule. It is not live QR-scan acceptance.
 
+## Express (快速) mode
+
+Luma's scan bundle shows that Express mode POSTs `/event/admin/check-in/express` and, on `status: "success"`, shows the
+**server-provided message** in a success toast, not the fixed `已签到。` text. Toasts are react-hot-toast bars whose
+inline style carries the type colour: `var(--success-bg-color)` (success), `var(--error-bg-color)` (failure) or the
+neutral primary colour (already checked in / open guest). The profile therefore also accepts a `role="status"`
+element that sits in a bar styled with `--success-bg-color` and has non-empty text with no removal wording
+(撤销/移除/取消/undo/removed...), because "Removed check in." is also a success-styled toast. The exact `已签到。`
+rule still applies for Standard mode. Verified by reading the bundle and by injecting a DOM-identical toast on the real
+scan page; a real Express scan of a guest was not performed (it would change attendee data).
+
 ## Rule (`src/profile.js` + `src/detector.js`)
 
 The profile is stateless: success = at least one `[role="status"]` element whose trimmed text is exactly

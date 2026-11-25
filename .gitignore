@@ -4,3 +4,6 @@ test-results/
 playwright-report/
 *.zip
 release/
+
+# Local Playwright browser downloads (e2e)
+.pw-browsers/

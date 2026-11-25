@@ -19,7 +19,7 @@ CSS cannot restyle the overlay; pause/hide persistence; reduced motion; narrow v
 toast; empty-then-filled toast; rewrite/re-render with row/counter/button updates; transient toast then
 `aria-live` clone (gap and overlap) = one; clone alone, near-miss texts, wrong roles, English text = none; toast
 present at load or before SPA entry = none; overlapping guests, sequential guests and a persistent clone all
-counted correctly; no observer leaks across route re-entry; pending cap, <=48 particles, DOM drains.
+counted correctly; no observer leaks across route re-entry; pending cap, <=160 particles, DOM drains.
 The detector lifecycle cases are tagged SUPPORTED or AMBIGUOUS in the tests and mirror the table in `docs/DETECTION.md`
 (including React remount, cleared-then-refilled node, coexisting toasts, clone persistence with toast recurrence, and
 the ambiguous same-tick swap that is counted once). A mutation check (matching the `aria-live` clone too) makes the

@@ -68,6 +68,7 @@
       document,
       settings,
       art: G.botArt,
+      botShapes: G.botShapes,
       cssText: G.overlayCss,
       onSettingsChange: saveSettings,
     });

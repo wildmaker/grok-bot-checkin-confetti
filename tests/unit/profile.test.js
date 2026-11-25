@@ -4,7 +4,14 @@ const { profile, SUCCESS_TEXT } = require('../../src/profile.js');
 const { createDetector } = require('../../src/detector.js');
 
 // Fake DOM: only what the profile reads (querySelectorAll('[role="status"]') and textContent).
-const node = (text, role = 'status') => ({ role, textContent: text });
+const node = (text, role = 'status', barStyle = null) => ({
+  role,
+  textContent: text,
+  parentElement: { getAttribute: (n) => (n === 'style' ? barStyle : null) },
+});
+const SUCCESS_BAR = 'background-color: var(--success-bg-color); color: white; min-width: 200px;';
+const ERROR_BAR = 'background-color: var(--error-bg-color); color: white; min-width: 200px;';
+const NEUTRAL_BAR = 'background-color: var(--primary-color); min-width: 200px;';
 const page = (...nodes) => ({
   nodes,
   querySelectorAll(sel) {
@@ -147,4 +154,29 @@ test('an empty toast that is filled later fires once, on fill', () => {
   d.evaluate(p);
   d.evaluate(p);
   assert.equal(events.length, 1);
+});
+
+test('Express mode: server-worded toast in a success-styled bar counts; other bars and removal wording do not', () => {
+  for (const text of ['张三 已签到', 'Alex Chen checked in', 'Alex Chen 已签到！', '签到成功']) {
+    assert.deepEqual(profile.read(page(node(text, 'status', SUCCESS_BAR))), { state: 'success', count: 1 }, text);
+  }
+  assert.equal(profile.read(page(node('张三 已签到', 'status', ERROR_BAR))).state, 'idle');
+  assert.equal(profile.read(page(node('张三 已签到', 'status', NEUTRAL_BAR))).state, 'idle');
+  assert.equal(profile.read(page(node('张三 已经签到', 'status', null))).state, 'idle');
+  for (const text of ['已撤销签到。', '已移除签到。', '签到已取消', 'Removed check in.', 'Check-in undone', '']) {
+    assert.equal(profile.read(page(node(text, 'status', SUCCESS_BAR))).state, 'idle', text);
+  }
+  assert.equal(profile.read(page(node('张三 已签到', 'alert', SUCCESS_BAR))).state, 'idle');
+});
+
+test('Express mode: consecutive scans each celebrate once', () => {
+  const { events, d } = run();
+  const a = node('张三 已签到', 'status', SUCCESS_BAR);
+  const p = page(a);
+  d.evaluate(p);
+  p.nodes = [];
+  d.evaluate(p);
+  p.nodes = [node('李四 已签到', 'status', SUCCESS_BAR)];
+  d.evaluate(p);
+  assert.equal(events.length, 2);
 });

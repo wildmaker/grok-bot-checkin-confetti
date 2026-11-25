@@ -24,6 +24,7 @@ async function launch(port, { viewport = { width: 1280, height: 800 }, recordVid
       `--disable-extensions-except=${ext}`,
       `--load-extension=${ext}`,
       '--host-resolver-rules=MAP luma.com 127.0.0.1',
+      '--no-proxy-server',
       '--ignore-certificate-errors',
     ],
   });

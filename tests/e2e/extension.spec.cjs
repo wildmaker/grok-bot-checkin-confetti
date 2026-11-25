@@ -214,7 +214,7 @@ test('native success toast -> exactly one celebration; DOM drains afterwards', a
   await toast(page);
   await expect.poll(() => celebrations(page)).toBe(1);
   await expect.poll(() => stat(page, 'particles')).toBeGreaterThan(30);
-  expect(await stat(page, 'particles')).toBeLessThanOrEqual(48);
+  expect(await stat(page, 'particles')).toBeLessThanOrEqual(160);
   await idle(page);
   await sleep(250);
   expect(await celebrations(page)).toBe(1);
@@ -406,7 +406,7 @@ test('paused or hidden bots skip celebrations', async () => {
   await context.close();
 });
 
-test('bounded under a burst: pending cap, <=48 particles, DOM drains', async () => {
+test('bounded under a burst: pending cap, <=160 particles, DOM drains', async () => {
   test.setTimeout(120_000);
   const { context, page } = await openScan();
   await page.evaluate((s) => {
@@ -419,7 +419,7 @@ test('bounded under a burst: pending cap, <=48 particles, DOM drains', async () 
   await expect.poll(() => stat(page, 'dropped')).toBeGreaterThan(0);
   await expect.poll(() => celebrations(page), { timeout: 60_000 }).toBe(7);
   await idle(page);
-  expect(await page.evaluate(() => window.__maxParticles)).toBeLessThanOrEqual(48);
+  expect(await page.evaluate(() => window.__maxParticles)).toBeLessThanOrEqual(160);
   expect(await stat(page, 'dropped')).toBe(12 - 7);
   expect(await page.evaluate((s) => document.querySelector(s).shadowRoot.querySelector('.stage').childElementCount, HOST)).toBe(4);
   await context.close();
